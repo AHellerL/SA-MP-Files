@@ -467,7 +467,7 @@ public OnPlayerWeaponShot(playerid, weaponid, hittype, hitid, Float:fX, Float:fY
 
 public OnPlayerTakeDamage(playerid, issuerid, Float:amount, weaponid, bodypart)
 {
-	if (issuerid != INVALID_PLAYER_ID)
+	if(issuerid != INVALID_PLAYER_ID)
 	{
 		return 1;
 	}
@@ -487,7 +487,44 @@ public OnPlayerTakeDamage(playerid, issuerid, Float:amount, weaponid, bodypart)
 			 WEAPON_HELIBLADES,
 			 WEAPON_EXPLOSION:
     	{
-    	    // process
+    	    new Float:armour;
+			GetPlayerArmour(playerid, armour);
+
+		    new Float:health;
+			GetPlayerHealth(playerid, health);
+
+    	    if(armour > 0.0)
+			{
+				armour -= amount;
+			  	if (armour < 0.0)
+			  	{
+			  	    PlayerProcessing[playerid] = 1;
+					SetPlayerArmour(playerid, 0.0);
+					health += armour;
+					SetPlayerHealth(playerid, health);
+					PlayerProcessing[playerid] = 0;
+				}
+				else
+				{
+				    PlayerProcessing[playerid] = 1;
+				    SetPlayerArmour(playerid, armour);
+				    PlayerProcessing[playerid] = 0;
+				}
+			}
+			else
+			{
+			    health -= amount;
+			    PlayerProcessing[playerid] = 1;
+				SetPlayerHealth(playerid, health);
+				PlayerProcessing[playerid] = 0;
+			}
+
+			if (health <= 0.0)
+			{
+			    playerDeath[playerid][E_PLAYER_DEATH_VALID] = true;
+				playerDeath[playerid][E_PLAYER_DEATH_KILLERID] = issuerid;
+				playerDeath[playerid][E_PLAYER_DEATH_REASON] = weaponid;
+			}
 		}
 
     	case WEAPON_DROWN:
@@ -527,19 +564,6 @@ public OnPlayerTakeDamage(playerid, issuerid, Float:amount, weaponid, bodypart)
     	    // do not process
     	    return 1;
     	}
-	}
-
-	new Float:armour;
-	GetPlayerArmour(playerid, armour);
-
-    new Float:health;
-	GetPlayerHealth(playerid, health);
-
-	if (((armour + health) - amount) <= 0.0)
-	{
-	    playerDeath[playerid][E_PLAYER_DEATH_VALID] = true;
-		playerDeath[playerid][E_PLAYER_DEATH_KILLERID] = INVALID_PLAYER_ID;
-		playerDeath[playerid][E_PLAYER_DEATH_REASON] = weaponid;
 	}
 
 	#if defined LC_OnPlayerTakeDamage
